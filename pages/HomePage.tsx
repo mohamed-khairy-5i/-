@@ -5,7 +5,7 @@ import { NavLink } from 'react-router-dom';
 import { getStats, getMergedSurahData } from '../services/api';
 import type { SurahDetail } from '../types';
 import Spinner from '../components/Spinner';
-import { BookOpenIcon, StarIcon, CogIcon, RadioIcon } from '../components/icons';
+import { BookOpenIcon, StarIcon, CogIcon, RadioIcon, TafsirIcon } from '../components/icons';
 
 const HomePage: React.FC = () => {
   const [stats, setStats] = useState<any>(null);
@@ -79,10 +79,14 @@ const HomePage: React.FC = () => {
       
       <section>
           <h2 className="text-2xl font-bold mb-4 text-center text-gray-300">استكشف</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <NavLink to="/surahs" className="flex flex-col items-center justify-center p-6 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-yellow-400 transition-all transform hover:-translate-y-1">
                   <BookOpenIcon className="w-12 h-12 text-yellow-400 mb-2" />
                   <span className="text-xl font-bold">تصفح السور</span>
+              </NavLink>
+               <NavLink to="/tafsir" className="flex flex-col items-center justify-center p-6 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-yellow-400 transition-all transform hover:-translate-y-1">
+                  <TafsirIcon className="w-12 h-12 text-yellow-400 mb-2" />
+                  <span className="text-xl font-bold">التفسير</span>
               </NavLink>
               <NavLink to="/radio" className="flex flex-col items-center justify-center p-6 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-yellow-400 transition-all transform hover:-translate-y-1">
                   <RadioIcon className="w-12 h-12 text-yellow-400 mb-2" />

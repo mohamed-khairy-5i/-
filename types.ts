@@ -1,4 +1,3 @@
-
 export interface SurahReference {
   number: number;
   name: string;
@@ -43,15 +42,13 @@ export interface RadioStation {
 }
 
 export interface TafsirInfo {
-    id: number;
+    slug: string;
     name: string;
-    author_name: string;
-    language_name: string;
-    slug?: string; // from editions.json
+    author: string;
+    language: string;
 }
 
 export interface TafsirContent {
-    resource_id: number;
     text: string;
 }
 
@@ -65,4 +62,29 @@ export interface FavoriteAyah {
 export interface AppSettings {
     fontSize: number;
     defaultReciterIdentifier: string;
+}
+
+export interface SearchResultMatch {
+    number: number;
+    text: string;
+    surah: SurahReference;
+    numberInSurah: number;
+}
+
+export interface SearchResult {
+    count: number;
+    matches: SearchResultMatch[];
+}
+
+export interface AyahTafsir {
+    ayahInSurah: number;
+    text: string;
+}
+
+export interface SurahTafsir {
+    tafsirId: number;
+    tafsirName: string;
+    surahId: number;
+    surahName: string;
+    ayahs: AyahTafsir[];
 }

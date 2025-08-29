@@ -1,7 +1,7 @@
-import type { SurahReference, SurahDetail, Edition, TafsirInfo, TafsirContent, RadioStation } from '../types';
+import type { SurahReference, SurahDetail, Edition, TafsirInfo, TafsirContent, RadioStation, SearchResult, SurahTafsir, AyahTafsir } from '../types';
 
 const ALQURAN_CLOUD_API = 'https://api.alquran.cloud/v1';
-const QURAN_COM_API = 'https://api.quran.com/api/v4';
+const TAFSIR_API = 'https://cdn.jsdelivr.net/gh/spa5k/tafsir_api@main/tafsir';
 const MP3QURAN_API = 'https://mp3quran.net/api/v3';
 
 export async function getSurahs(): Promise<SurahReference[]> {
@@ -40,6 +40,24 @@ export async function getMergedSurahData(surahNumber: number, audioEditionIdenti
     }
 }
 
+export async function searchQuran(query: string): Promise<SearchResult | null> {
+    if (!query) return null;
+    try {
+        const response = await fetch(`${ALQURAN_CLOUD_API}/search/${encodeURIComponent(query)}/all/quran-uthmani`);
+        // FIX: Corrected a typo in the response check from `response.,ok` to `response.ok`.
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        if (data.code === 200) {
+            return data.data;
+        }
+        return null;
+    } catch (error) {
+        console.error("Failed to perform Quran search:", error);
+        return null;
+    }
+}
+
+
 export async function getAudioEditions(): Promise<Edition[]> {
     try {
         const response = await fetch(`${ALQURAN_CLOUD_API}/edition/format/audio`);
@@ -71,24 +89,50 @@ export async function getRadios(): Promise<RadioStation[]> {
 
 export async function getTafsirs(): Promise<TafsirInfo[]> {
     try {
-        const response = await fetch(`${QURAN_COM_API}/resources/tafsirs`);
+        const response = await fetch(`${TAFSIR_API}/editions.json`);
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
-        return data.tafsirs;
+        return data;
     } catch (error) {
         console.error("Failed to fetch tafsirs:", error);
         return [];
     }
 }
 
-export async function getTafsirForAyah(tafsirId: number, surahNumber: number, ayahNumber: number): Promise<TafsirContent | null> {
+export async function getTafsirForAyah(tafsirSlug: string, surahNumber: number, ayahNumber: number): Promise<TafsirContent | null> {
     try {
-        const response = await fetch(`${QURAN_COM_API}/quran/tafsirs/${tafsirId}?verse_key=${surahNumber}:${ayahNumber}`);
+        const response = await fetch(`${TAFSIR_API}/${tafsirSlug}/${surahNumber}/${ayahNumber}.json`);
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
-        return data.tafsirs[0]; // The API seems to wrap it in a 'tafsirs' array
+        return { text: data.text };
     } catch (error) {
         console.error(`Failed to fetch tafsir for ayah ${surahNumber}:${ayahNumber}:`, error);
+        return null;
+    }
+}
+
+export async function getTafsirForSurah(tafsirSlug: string, surahNumber: number): Promise<SurahTafsir | null> {
+    try {
+        const response = await fetch(`${TAFSIR_API}/${tafsirSlug}/${surahNumber}.json`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+
+        const ayahs: AyahTafsir[] = (data.text && typeof data.text === 'object')
+            ? Object.entries(data.text).map(([ayahNum, text]) => ({
+                ayahInSurah: parseInt(ayahNum, 10),
+                text: text as string,
+            }))
+            : [];
+
+        return {
+            tafsirId: data.tafsir_id,
+            tafsirName: data.tafsir_name,
+            surahId: data.surah_id,
+            surahName: data.surah_name,
+            ayahs: ayahs,
+        };
+    } catch (error) {
+        console.error(`Failed to fetch tafsir for surah ${surahNumber}:`, error);
         return null;
     }
 }

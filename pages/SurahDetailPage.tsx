@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { getMergedSurahData, getTafsirForAyah, getTafsirs } from '../services/api';
@@ -16,10 +15,10 @@ interface AyahListItemProps {
     onPlay: (ayah: Ayah) => void;
     onToggleFavorite: (ayah: Ayah) => void;
     fontSize: number;
-    selectedTafsirId: number;
+    selectedTafsirSlug: string;
 }
 
-const AyahListItem: React.FC<AyahListItemProps> = ({ ayah, surah, isPlaying, isFavorite, onPlay, onToggleFavorite, fontSize, selectedTafsirId }) => {
+const AyahListItem: React.FC<AyahListItemProps> = ({ ayah, surah, isPlaying, isFavorite, onPlay, onToggleFavorite, fontSize, selectedTafsirSlug }) => {
     const [tafsir, setTafsir] = useState<TafsirContent | null>(null);
     const [showTafsir, setShowTafsir] = useState(false);
     const [isLoadingTafsir, setIsLoadingTafsir] = useState(false);
@@ -27,7 +26,7 @@ const AyahListItem: React.FC<AyahListItemProps> = ({ ayah, surah, isPlaying, isF
     const handleShowTafsir = async () => {
         if (!showTafsir) {
             setIsLoadingTafsir(true);
-            const tafsirData = await getTafsirForAyah(selectedTafsirId, surah.number, ayah.numberInSurah);
+            const tafsirData = await getTafsirForAyah(selectedTafsirSlug, surah.number, ayah.numberInSurah);
             setTafsir(tafsirData);
             setIsLoadingTafsir(false);
         }
@@ -39,13 +38,13 @@ const AyahListItem: React.FC<AyahListItemProps> = ({ ayah, surah, isPlaying, isF
         if (showTafsir) {
             const fetchTafsir = async () => {
                 setIsLoadingTafsir(true);
-                const tafsirData = await getTafsirForAyah(selectedTafsirId, surah.number, ayah.numberInSurah);
+                const tafsirData = await getTafsirForAyah(selectedTafsirSlug, surah.number, ayah.numberInSurah);
                 setTafsir(tafsirData);
                 setIsLoadingTafsir(false);
             };
             fetchTafsir();
         }
-    }, [selectedTafsirId, showTafsir, surah.number, ayah.numberInSurah]);
+    }, [selectedTafsirSlug, showTafsir, surah.number, ayah.numberInSurah]);
 
 
     return (
@@ -87,7 +86,7 @@ const SurahDetailPage: React.FC = () => {
   const { setAudioSrc, setIsPlaying, setCurrentlyPlaying, currentlyPlaying, settings } = useContext(AppContext);
   const [favorites, setFavorites] = useLocalStorage<FavoriteAyah[]>('favorites:verses', []);
   const [tafsirs, setTafsirs] = useState<TafsirInfo[]>([]);
-  const [selectedTafsirId, setSelectedTafsirId] = useState<number>(131); // Default to "Tafsir Al-Muyassar"
+  const [selectedTafsirSlug, setSelectedTafsirSlug] = useState<string>('ar-tafsir-muyassar'); // Default to "Tafsir Al-Muyassar"
 
   useEffect(() => {
     const fetchSurah = async () => {
@@ -153,12 +152,12 @@ const SurahDetailPage: React.FC = () => {
             <label htmlFor="tafsir-select" className="block mb-2 text-sm font-medium text-gray-300">اختر التفسير:</label>
             <select
                 id="tafsir-select"
-                value={selectedTafsirId}
-                onChange={(e) => setSelectedTafsirId(Number(e.target.value))}
+                value={selectedTafsirSlug}
+                onChange={(e) => setSelectedTafsirSlug(e.target.value)}
                 className="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-yellow-500 focus:border-yellow-500 block w-full p-2.5"
             >
                 {tafsirs.map(tafsir => (
-                    <option key={tafsir.id} value={tafsir.id}>{tafsir.name}</option>
+                    <option key={tafsir.slug} value={tafsir.slug}>{tafsir.name}</option>
                 ))}
             </select>
         </div>
@@ -173,7 +172,7 @@ const SurahDetailPage: React.FC = () => {
                 onPlay={handlePlay}
                 onToggleFavorite={handleToggleFavorite}
                 fontSize={settings.fontSize}
-                selectedTafsirId={selectedTafsirId}
+                selectedTafsirSlug={selectedTafsirSlug}
             />
             ))}
         </div>

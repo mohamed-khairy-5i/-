@@ -1,4 +1,3 @@
-
 import React, { useState, createContext, useMemo } from 'react';
 import { HashRouter, Routes, Route, NavLink } from 'react-router-dom';
 import HomePage from './pages/HomePage';
@@ -7,10 +6,13 @@ import SurahDetailPage from './pages/SurahDetailPage';
 import SettingsPage from './pages/SettingsPage';
 import FavoritesPage from './pages/FavoritesPage';
 import RadioPage from './pages/RadioPage';
+import SearchPage from './pages/SearchPage';
+import TafsirPage from './pages/TafsirPage';
+import TafsirDetailPage from './pages/TafsirDetailPage';
 import AudioPlayer from './components/AudioPlayer';
 import useLocalStorage from './hooks/useLocalStorage';
 import type { SurahDetail, Ayah, AppSettings, RadioStation } from './types';
-import { BookOpenIcon, StarIcon, CogIcon, HomeIcon, RadioIcon } from './components/icons';
+import { BookOpenIcon, StarIcon, CogIcon, HomeIcon, TafsirIcon } from './components/icons';
 
 
 export interface CurrentlyPlaying {
@@ -42,6 +44,12 @@ const App: React.FC = () => {
     const handlePlayPause = () => {
         if (!audioSrc) return;
         setIsPlaying(!isPlaying);
+    };
+
+    const handleClosePlayer = () => {
+        setIsPlaying(false);
+        setAudioSrc(null);
+        setCurrentlyPlaying(null);
     };
 
     const handleAudioEnded = () => {
@@ -79,49 +87,56 @@ const App: React.FC = () => {
     return (
         <AppContext.Provider value={appContextValue}>
             <HashRouter>
-                <div className="min-h-screen flex flex-col pb-28">
-                    <main className="flex-grow">
+                <div className="min-h-screen flex flex-col">
+                    <main className={`flex-grow ${audioSrc ? 'pb-32' : 'pb-16'}`}>
                         <Routes>
                             <Route path="/" element={<HomePage />} />
                             <Route path="/surahs" element={<SurahsPage />} />
                             <Route path="/surah/:number" element={<SurahDetailPage />} />
+                            <Route path="/search" element={<SearchPage />} />
+                            <Route path="/tafsir" element={<TafsirPage />} />
+                            <Route path="/tafsir/:slug" element={<TafsirDetailPage />} />
                             <Route path="/radio" element={<RadioPage />} />
                             <Route path="/favorites" element={<FavoritesPage />} />
                             <Route path="/settings" element={<SettingsPage />} />
                         </Routes>
                     </main>
-                    <nav className="fixed bottom-0 right-0 left-0 bg-gray-800/80 backdrop-blur-sm border-t border-gray-700 z-40">
-                        <div className="container mx-auto flex justify-around items-center h-16 text-xs">
-                             <NavLink to="/" className={navLinkClass}>
-                                <HomeIcon className="w-6 h-6" />
-                                <span>الرئيسية</span>
-                            </NavLink>
-                            <NavLink to="/surahs" className={navLinkClass}>
-                                <BookOpenIcon className="w-6 h-6" />
-                                <span>السور</span>
-                            </NavLink>
-                             <NavLink to="/radio" className={navLinkClass}>
-                                <RadioIcon className="w-6 h-6" />
-                                <span>الإذاعة</span>
-                            </NavLink>
-                            <NavLink to="/favorites" className={navLinkClass}>
-                                <StarIcon className="w-6 h-6" />
-                                <span>المفضلة</span>
-                            </NavLink>
-                            <NavLink to="/settings" className={navLinkClass}>
-                                <CogIcon className="w-6 h-6" />
-                                <span>الإعدادات</span>
-                            </NavLink>
-                        </div>
-                    </nav>
+                    
+                    <div className="fixed bottom-0 right-0 left-0 z-40">
+                         <AudioPlayer 
+                            audioSrc={audioSrc}
+                            isPlaying={isPlaying}
+                            onPlayPause={handlePlayPause}
+                            onEnded={handleAudioEnded}
+                            onClose={handleClosePlayer}
+                            currentlyPlaying={currentlyPlaying}
+                        />
+                        <nav className="bg-gray-800/80 backdrop-blur-sm border-t border-gray-700">
+                            <div className="container mx-auto flex justify-around items-center h-16 text-xs">
+                                <NavLink to="/" className={navLinkClass}>
+                                    <HomeIcon className="w-6 h-6" />
+                                    <span>الرئيسية</span>
+                                </NavLink>
+                                <NavLink to="/surahs" className={navLinkClass}>
+                                    <BookOpenIcon className="w-6 h-6" />
+                                    <span>السور</span>
+                                </NavLink>
+                                <NavLink to="/tafsir" className={navLinkClass}>
+                                    <TafsirIcon className="w-6 h-6" />
+                                    <span>التفسير</span>
+                                </NavLink>
+                                <NavLink to="/favorites" className={navLinkClass}>
+                                    <StarIcon className="w-6 h-6" />
+                                    <span>المفضلة</span>
+                                </NavLink>
+                                <NavLink to="/settings" className={navLinkClass}>
+                                    <CogIcon className="w-6 h-6" />
+                                    <span>الإعدادات</span>
+                                </NavLink>
+                            </div>
+                        </nav>
+                    </div>
                 </div>
-                <AudioPlayer 
-                    audioSrc={audioSrc}
-                    isPlaying={isPlaying}
-                    onPlayPause={handlePlayPause}
-                    onEnded={handleAudioEnded}
-                    currentlyPlaying={currentlyPlaying}
-                />
             </HashRouter>
         </AppContext.Provider>
     );

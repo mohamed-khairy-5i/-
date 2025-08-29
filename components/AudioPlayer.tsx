@@ -1,17 +1,17 @@
-
 import React, { useRef, useEffect } from 'react';
 import type { CurrentlyPlaying } from '../App';
-import { PlayIcon, PauseIcon } from './icons';
+import { PlayIcon, PauseIcon, CloseIcon } from './icons';
 
 interface AudioPlayerProps {
   audioSrc: string | null;
   isPlaying: boolean;
   onPlayPause: () => void;
   onEnded: () => void;
+  onClose: () => void;
   currentlyPlaying: CurrentlyPlaying | null;
 }
 
-const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioSrc, isPlaying, onPlayPause, onEnded, currentlyPlaying }) => {
+const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioSrc, isPlaying, onPlayPause, onEnded, onClose, currentlyPlaying }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -48,15 +48,15 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioSrc, isPlaying, onPlayPa
         case 'ayah':
             return (
                 <>
-                    <p className="font-bold text-yellow-400">{currentlyPlaying.surah?.name}</p>
+                    <p className="font-bold text-yellow-400 truncate">{currentlyPlaying.surah?.name}</p>
                     <p className="text-gray-300">الآية: {currentlyPlaying.ayah?.numberInSurah}</p>
                 </>
             );
         case 'radio':
             return (
                  <>
-                    <p className="font-bold text-yellow-400">الإذاعة</p>
-                    <p className="text-gray-300">{currentlyPlaying.station?.name}</p>
+                    <p className="font-bold text-yellow-400 truncate">الإذاعة</p>
+                    <p className="text-gray-300 truncate">{currentlyPlaying.station?.name}</p>
                 </>
             );
         default:
@@ -65,13 +65,19 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioSrc, isPlaying, onPlayPa
   }
 
   return (
-    <div className={`fixed bottom-16 right-0 left-0 bg-gray-800/80 backdrop-blur-sm border-t border-gray-700 z-50 transition-transform duration-300 ${audioSrc ? 'translate-y-0' : 'translate-y-full'}`}>
-      <div className="container mx-auto px-4 py-2 flex items-center justify-between">
-        <div className="text-sm">
+    <div className={`bg-gray-800/80 backdrop-blur-sm border-t border-gray-700 ${audioSrc ? '' : 'hidden'}`}>
+      <div className="container mx-auto px-4 py-2 grid grid-cols-3 items-center gap-2">
+        <div className="flex justify-start">
+            <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-700 hover:text-white transition-colors" aria-label="إغلاق المشغل">
+                <CloseIcon className="w-5 h-5" />
+            </button>
+        </div>
+        
+        <div className="text-sm text-center overflow-hidden">
           {getDisplayText()}
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex justify-end">
           <button onClick={onPlayPause} className="p-2 rounded-full bg-yellow-400 text-gray-900 hover:bg-yellow-500 transition-colors">
             {isPlaying ? <PauseIcon className="w-6 h-6" /> : <PlayIcon className="w-6 h-6" />}
           </button>
