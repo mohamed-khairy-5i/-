@@ -1,9 +1,8 @@
-
 import type { SurahReference, SurahDetail, Edition, TafsirInfo, TafsirContent, RadioStation } from '../types';
 
 const ALQURAN_CLOUD_API = 'https://api.alquran.cloud/v1';
 const QURAN_COM_API = 'https://api.quran.com/api/v4';
-const RADIO_BROWSER_API = 'https://fr1.api.radio-browser.info/json';
+const MP3QURAN_API = 'https://mp3quran.net/api/v3';
 
 export async function getSurahs(): Promise<SurahReference[]> {
   try {
@@ -55,17 +54,15 @@ export async function getAudioEditions(): Promise<Edition[]> {
 
 export async function getRadios(): Promise<RadioStation[]> {
     try {
-        const response = await fetch(`${RADIO_BROWSER_API}/stations/search?tag=islam&limit=100&hidebroken=true&order=votes&reverse=true`);
+        const response = await fetch(`${MP3QURAN_API}/radios`);
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
-        // Filter out stations with empty names and map to our RadioStation type
-        return data
-            .filter((station: any) => station.name && station.name.trim() !== '')
-            .map((station: any): RadioStation => ({
-                id: station.stationuuid,
-                name: station.name,
-                url: station.url_resolved || station.url,
-            }));
+        // The API returns an object with a 'radios' property which is an array
+        return data.radios.map((station: any): RadioStation => ({
+            id: station.id,
+            name: station.name,
+            url: station.url,
+        }));
     } catch (error) {
         console.error("Failed to fetch radios:", error);
         return [];
