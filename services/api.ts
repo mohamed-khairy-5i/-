@@ -41,19 +41,36 @@ export async function getMergedSurahData(surahNumber: number, audioEditionIdenti
 }
 
 export async function searchQuran(query: string): Promise<SearchResult | null> {
-    if (!query) return null;
+    if (!query || query.trim().length < 3) {
+        // API requires at least 3 characters for a search.
+        return { count: 0, matches: [] };
+    }
     try {
         const response = await fetch(`${ALQURAN_CLOUD_API}/search/${encodeURIComponent(query)}/all/quran-uthmani`);
-        // FIX: Corrected a typo in the response check from `response.,ok` to `response.ok`.
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
-        if (data.code === 200) {
-            return data.data;
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.code === 200) {
+                return data.data;
+            } else {
+                console.warn(`Search API returned ok status but with code ${data.code}:`, data.data);
+                return { count: 0, matches: [] };
+            }
+        } else {
+            // This handles non-2xx responses (404, 400, 500 etc.)
+            // We treat "not found" as a non-error case and just return empty results.
+            if (response.status === 404) {
+                return { count: 0, matches: [] };
+            }
+            // For other errors, log them but still return empty results to the UI to prevent crashes.
+            const errorData = await response.json().catch(() => ({ error: 'Could not parse error JSON' }));
+            console.error(`Search API failed with status ${response.status}:`, errorData.error || errorData.data || 'Unknown API error');
+            return { count: 0, matches: [] };
         }
-        return null;
     } catch (error) {
-        console.error("Failed to perform Quran search:", error);
-        return null;
+        // This catches network errors (e.g., no internet) or JSON parsing errors on success responses.
+        console.error("Failed to perform Quran search (network/parsing error):", error);
+        return null; // A null result can indicate a more serious error to the UI.
     }
 }
 

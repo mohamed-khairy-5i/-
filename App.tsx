@@ -12,7 +12,7 @@ import TafsirDetailPage from './pages/TafsirDetailPage';
 import AudioPlayer from './components/AudioPlayer';
 import useLocalStorage from './hooks/useLocalStorage';
 import type { SurahDetail, Ayah, AppSettings, RadioStation } from './types';
-import { BookOpenIcon, StarIcon, CogIcon, HomeIcon, TafsirIcon } from './components/icons';
+import { BookOpenIcon, StarIcon, CogIcon, HomeIcon, RadioIcon, SearchIcon } from './components/icons';
 
 
 export interface CurrentlyPlaying {
@@ -34,6 +34,20 @@ interface IAppContext {
 }
 
 export const AppContext = createContext<IAppContext>({} as IAppContext);
+
+const Header: React.FC = () => (
+    <header className="fixed top-0 right-0 left-0 z-50 bg-slate-950/80 backdrop-blur-sm border-b border-slate-700">
+        <div className="container mx-auto px-4 h-16 flex justify-between items-center">
+            <NavLink to="/" className="text-2xl font-amiri-quran text-yellow-400">
+                مداد الهدى
+            </NavLink>
+            <NavLink to="/search" className="p-2 rounded-full text-gray-300 hover:bg-slate-700 hover:text-white transition-colors" aria-label="البحث">
+                <SearchIcon className="w-6 h-6" />
+            </NavLink>
+        </div>
+    </header>
+);
+
 
 const App: React.FC = () => {
     const [audioSrc, setAudioSrc] = useState<string | null>(null);
@@ -87,8 +101,9 @@ const App: React.FC = () => {
     return (
         <AppContext.Provider value={appContextValue}>
             <HashRouter>
+                <Header />
                 <div className="min-h-screen flex flex-col">
-                    <main className={`flex-grow ${audioSrc ? 'pb-32' : 'pb-16'}`}>
+                    <main className="flex-grow pt-20 pb-24">
                         <Routes>
                             <Route path="/" element={<HomePage />} />
                             <Route path="/surahs" element={<SurahsPage />} />
@@ -121,9 +136,9 @@ const App: React.FC = () => {
                                     <BookOpenIcon className="w-6 h-6" />
                                     <span>السور</span>
                                 </NavLink>
-                                <NavLink to="/tafsir" className={navLinkClass}>
-                                    <TafsirIcon className="w-6 h-6" />
-                                    <span>التفسير</span>
+                                <NavLink to="/radio" className={navLinkClass}>
+                                    <RadioIcon className="w-6 h-6" />
+                                    <span>الإذاعة</span>
                                 </NavLink>
                                 <NavLink to="/favorites" className={navLinkClass}>
                                     <StarIcon className="w-6 h-6" />

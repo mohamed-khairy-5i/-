@@ -3,81 +3,9 @@ import { useParams } from 'react-router-dom';
 import { getMergedSurahData, getTafsirForAyah, getTafsirs } from '../services/api';
 import type { SurahDetail, Ayah, FavoriteAyah, TafsirContent, TafsirInfo } from '../types';
 import Spinner from '../components/Spinner';
-import { PlayIcon, StarIcon } from '../components/icons';
+import { PlayIcon, StarIcon, ClipboardIcon, CheckIcon, CloseIcon } from '../components/icons';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { AppContext } from '../App';
-
-interface AyahListItemProps {
-    ayah: Ayah;
-    surah: SurahDetail;
-    isPlaying: boolean;
-    isFavorite: boolean;
-    onPlay: (ayah: Ayah) => void;
-    onToggleFavorite: (ayah: Ayah) => void;
-    fontSize: number;
-    selectedTafsirSlug: string;
-}
-
-const AyahListItem: React.FC<AyahListItemProps> = ({ ayah, surah, isPlaying, isFavorite, onPlay, onToggleFavorite, fontSize, selectedTafsirSlug }) => {
-    const [tafsir, setTafsir] = useState<TafsirContent | null>(null);
-    const [showTafsir, setShowTafsir] = useState(false);
-    const [isLoadingTafsir, setIsLoadingTafsir] = useState(false);
-
-    const handleShowTafsir = async () => {
-        if (!showTafsir) {
-            setIsLoadingTafsir(true);
-            const tafsirData = await getTafsirForAyah(selectedTafsirSlug, surah.number, ayah.numberInSurah);
-            setTafsir(tafsirData);
-            setIsLoadingTafsir(false);
-        }
-        setShowTafsir(!showTafsir);
-    };
-    
-    useEffect(() => {
-        // If tafsir is shown and user changes selection, refetch
-        if (showTafsir) {
-            const fetchTafsir = async () => {
-                setIsLoadingTafsir(true);
-                const tafsirData = await getTafsirForAyah(selectedTafsirSlug, surah.number, ayah.numberInSurah);
-                setTafsir(tafsirData);
-                setIsLoadingTafsir(false);
-            };
-            fetchTafsir();
-        }
-    }, [selectedTafsirSlug, showTafsir, surah.number, ayah.numberInSurah]);
-
-
-    return (
-        <div className="p-4 border-b border-gray-700 group">
-            <p 
-                className="font-amiri-quran text-right leading-loose mb-4 transition-colors duration-300 group-hover:text-yellow-100"
-                style={{ fontSize: `${fontSize}px`}}
-            >
-                {ayah.text}
-                <span className="text-yellow-400 text-lg mr-2 font-sans">({ayah.numberInSurah})</span>
-            </p>
-            <div className="flex items-center gap-4 flex-wrap">
-                <button onClick={() => onPlay(ayah)} className="flex items-center gap-2 text-gray-400 hover:text-yellow-400 transition-colors">
-                    <PlayIcon className={`w-5 h-5 ${isPlaying ? 'text-yellow-400' : ''}`} />
-                    <span>{isPlaying ? 'تشغيل' : 'استماع'}</span>
-                </button>
-                <button onClick={() => onToggleFavorite(ayah)} className="flex items-center gap-2 text-gray-400 hover:text-yellow-400 transition-colors">
-                    <StarIcon className={`w-5 h-5 ${isFavorite ? 'text-yellow-400' : ''}`} />
-                    <span>{isFavorite ? 'في المفضلة' : 'إضافة للمفضلة'}</span>
-                </button>
-                <button onClick={handleShowTafsir} className="flex items-center gap-2 text-gray-400 hover:text-yellow-400 transition-colors">
-                    <span>{showTafsir ? 'إخفاء التفسير' : 'عرض التفسير'}</span>
-                </button>
-            </div>
-            {showTafsir && (
-                <div className="mt-4 p-4 bg-gray-800/50 rounded-lg border-r-4 border-yellow-400">
-                    {isLoadingTafsir ? <Spinner /> : <p className="text-gray-300 whitespace-pre-wrap">{tafsir?.text}</p>}
-                </div>
-            )}
-        </div>
-    );
-};
-
 
 const SurahDetailPage: React.FC = () => {
   const { number } = useParams<{ number: string }>();
@@ -86,12 +14,20 @@ const SurahDetailPage: React.FC = () => {
   const { setAudioSrc, setIsPlaying, setCurrentlyPlaying, currentlyPlaying, settings } = useContext(AppContext);
   const [favorites, setFavorites] = useLocalStorage<FavoriteAyah[]>('favorites:verses', []);
   const [tafsirs, setTafsirs] = useState<TafsirInfo[]>([]);
-  const [selectedTafsirSlug, setSelectedTafsirSlug] = useState<string>('ar-tafsir-muyassar'); // Default to "Tafsir Al-Muyassar"
+  const [selectedTafsirSlug, setSelectedTafsirSlug] = useState<string>('ar-tafsir-muyassar');
+
+  // New state for inline interaction
+  const [selectedAyah, setSelectedAyah] = useState<Ayah | null>(null);
+  const [tafsir, setTafsir] = useState<TafsirContent | null>(null);
+  const [showTafsir, setShowTafsir] = useState(false);
+  const [isLoadingTafsir, setIsLoadingTafsir] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
     const fetchSurah = async () => {
       if (number) {
         setLoading(true);
+        setSelectedAyah(null); // Reset selection when surah changes
         const surahData = await getMergedSurahData(parseInt(number, 10), settings.defaultReciterIdentifier);
         setSurah(surahData);
         setLoading(false);
@@ -105,6 +41,17 @@ const SurahDetailPage: React.FC = () => {
     fetchSurah();
     fetchTafsirs();
   }, [number, settings.defaultReciterIdentifier]);
+  
+  const handleSelectAyah = (ayah: Ayah) => {
+      if (selectedAyah && selectedAyah.number === ayah.number) {
+          setSelectedAyah(null);
+          setShowTafsir(false);
+      } else {
+          setSelectedAyah(ayah);
+          setShowTafsir(false);
+          setTafsir(null);
+      }
+  };
 
   const handlePlay = useCallback((ayah: Ayah) => {
     if (surah) {
@@ -130,6 +77,39 @@ const SurahDetailPage: React.FC = () => {
     }
   }, [favorites, setFavorites, surah]);
 
+  const handleShowTafsir = async () => {
+      if (!selectedAyah) return;
+      const newShowTafsir = !showTafsir;
+      setShowTafsir(newShowTafsir);
+      if (newShowTafsir && !tafsir) {
+          setIsLoadingTafsir(true);
+          const tafsirData = await getTafsirForAyah(selectedTafsirSlug, surah!.number, selectedAyah.numberInSurah);
+          setTafsir(tafsirData);
+          setIsLoadingTafsir(false);
+      }
+  };
+
+  useEffect(() => {
+      if (showTafsir && selectedAyah && surah) {
+          const fetchTafsir = async () => {
+              setIsLoadingTafsir(true);
+              const tafsirData = await getTafsirForAyah(selectedTafsirSlug, surah.number, selectedAyah.numberInSurah);
+              setTafsir(tafsirData);
+              setIsLoadingTafsir(false);
+          };
+          fetchTafsir();
+      }
+  }, [selectedTafsirSlug, showTafsir, selectedAyah, surah]);
+
+  const handleCopyToClipboard = (ayah: Ayah) => {
+      navigator.clipboard.writeText(ayah.text).then(() => {
+          setIsCopied(true);
+          setTimeout(() => setIsCopied(false), 2000);
+      }).catch(err => {
+          console.error('Failed to copy ayah text: ', err);
+      });
+  };
+
   const isAyahFavorite = (ayah: Ayah) => {
     if(!surah) return false;
     return favorites.some(f => f.surahNumber === surah.number && f.ayahNumber === ayah.numberInSurah);
@@ -141,14 +121,13 @@ const SurahDetailPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4 animate-fade-in">
-      <header className="text-center py-8 bg-gray-800/50 rounded-lg mb-6">
+      <header className="text-center py-8 bg-gray-800/50 rounded-lg mb-6 space-y-4">
         <h1 className="text-5xl font-amiri-quran text-yellow-400">{surah.name}</h1>
         <p className="text-xl text-gray-300">{surah.englishName}</p>
         <p className="text-gray-400">{surah.revelationType === 'Meccan' ? 'مكية' : 'مدنية'} - {surah.numberOfAyahs} آيات</p>
       </header>
 
-      <div className="bg-gray-800/50 rounded-lg border border-gray-700">
-        <div className="p-4 border-b border-gray-700">
+        <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-4 mb-6">
             <label htmlFor="tafsir-select" className="block mb-2 text-sm font-medium text-gray-300">اختر التفسير:</label>
             <select
                 id="tafsir-select"
@@ -161,22 +140,61 @@ const SurahDetailPage: React.FC = () => {
                 ))}
             </select>
         </div>
-        <div className="overflow-hidden">
-            {surah.ayahs.map(ayah => (
-            <AyahListItem
-                key={ayah.number}
-                ayah={ayah}
-                surah={surah}
-                isPlaying={currentlyPlaying?.type === 'ayah' && currentlyPlaying.ayah?.number === ayah.number && currentlyPlaying.surah?.number === surah.number}
-                isFavorite={isAyahFavorite(ayah)}
-                onPlay={handlePlay}
-                onToggleFavorite={handleToggleFavorite}
-                fontSize={settings.fontSize}
-                selectedTafsirSlug={selectedTafsirSlug}
-            />
-            ))}
+      
+        <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-6 md:p-8 mb-6">
+            <p className="font-amiri-quran text-right leading-loose" style={{ fontSize: `${settings.fontSize}px` }}>
+                {surah.ayahs.map(ayah => {
+                    const arabicNumber = new Intl.NumberFormat('ar-EG').format(ayah.numberInSurah);
+                    return (
+                        <span
+                            key={ayah.number}
+                            onClick={() => handleSelectAyah(ayah)}
+                            className={`cursor-pointer transition-colors duration-300 rounded px-1 ${selectedAyah?.number === ayah.number ? 'bg-yellow-400/20' : 'hover:bg-slate-700/50'}`}
+                        >
+                            {ayah.text}
+                            <span className="text-yellow-400 text-lg mx-1 font-sans">
+                                ﴿{arabicNumber}﴾
+                            </span>
+                        </span>
+                    );
+                })}
+            </p>
         </div>
-      </div>
+        
+        {selectedAyah && (
+            <div className="bg-gray-800/80 backdrop-blur-sm rounded-lg border border-gray-700 p-4 sticky bottom-20 z-20 animate-fade-in-up shadow-2xl">
+                <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-700">
+                     <p className="text-gray-300 font-bold">
+                        سورة {surah.name}، الآية {selectedAyah.numberInSurah}
+                    </p>
+                    <button onClick={() => setSelectedAyah(null)} className="p-1 rounded-full text-gray-400 hover:text-white hover:bg-gray-700">
+                        <CloseIcon className="w-5 h-5" />
+                    </button>
+                </div>
+                <div className="flex items-center gap-4 flex-wrap">
+                    <button onClick={() => handlePlay(selectedAyah)} className="flex items-center gap-2 text-gray-300 hover:text-yellow-400 transition-colors">
+                        <PlayIcon className={`w-5 h-5 ${currentlyPlaying?.type === 'ayah' && currentlyPlaying.ayah?.number === selectedAyah.number ? 'text-yellow-400' : ''}`} />
+                        <span>استماع</span>
+                    </button>
+                    <button onClick={() => handleToggleFavorite(selectedAyah)} className="flex items-center gap-2 text-gray-300 hover:text-yellow-400 transition-colors">
+                        <StarIcon className={`w-5 h-5 ${isAyahFavorite(selectedAyah) ? 'text-yellow-400' : ''}`} />
+                        <span>{isAyahFavorite(selectedAyah) ? 'إزالة' : 'حفظ'}</span>
+                    </button>
+                    <button onClick={() => handleCopyToClipboard(selectedAyah)} className="flex items-center gap-2 text-gray-300 hover:text-yellow-400 transition-colors">
+                        {isCopied ? <CheckIcon className="w-5 h-5 text-green-400" /> : <ClipboardIcon className="w-5 h-5" />}
+                        <span>{isCopied ? 'تم النسخ' : 'نسخ'}</span>
+                    </button>
+                    <button onClick={handleShowTafsir} className="flex items-center gap-2 text-gray-300 hover:text-yellow-400 transition-colors">
+                        <span>{showTafsir ? 'إخفاء التفسير' : 'التفسير'}</span>
+                    </button>
+                </div>
+                {showTafsir && (
+                    <div className="mt-4 pt-4 border-t border-gray-700">
+                        {isLoadingTafsir ? <Spinner /> : <p className="text-gray-300 whitespace-pre-wrap text-sm">{tafsir?.text || 'لا يوجد تفسير لهذه الآية.'}</p>}
+                    </div>
+                )}
+            </div>
+        )}
     </div>
   );
 };

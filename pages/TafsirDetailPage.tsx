@@ -64,9 +64,9 @@ const TafsirDetailPage: React.FC = () => {
 
     return (
         <div className="container mx-auto p-4 animate-fade-in">
-            <header className="py-6 text-center">
+            <header className="py-6 text-center space-y-4">
                 <h1 className="text-4xl font-bold font-amiri-quran text-yellow-400">{tafsirData?.tafsirName || 'عرض التفسير'}</h1>
-                {selectedSurahInfo && <p className="text-2xl text-gray-300 mt-2">سورة {selectedSurahInfo.name}</p>}
+                {selectedSurahInfo && <p className="text-2xl text-gray-300">سورة {selectedSurahInfo.name}</p>}
             </header>
             
             <div className="sticky top-0 bg-gray-900 py-4 z-10 mb-6">

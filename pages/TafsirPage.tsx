@@ -26,7 +26,7 @@ const TafsirPage: React.FC = () => {
     <div className="container mx-auto p-4 animate-fade-in">
       <header className="py-6 text-center">
         <h1 className="text-4xl font-bold font-amiri-quran text-yellow-400">كتب التفسير</h1>
-        <p className="text-gray-400 mt-2">اختر أحد التفاسير لاستعراضه</p>
+        <p className="text-gray-400 mt-4">اختر أحد التفاسير لاستعراضه</p>
       </header>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {tafsirs.map(tafsir => (
@@ -36,7 +36,7 @@ const TafsirPage: React.FC = () => {
             className="block bg-gray-800/50 p-6 rounded-lg border border-gray-700 hover:border-yellow-400 transition-all duration-300 transform hover:shadow-lg hover:-translate-y-1"
           >
             <h2 className="text-xl font-bold text-white">{tafsir.name}</h2>
-            <p className="text-gray-400">{tafsir.author}</p>
+            <p className="text-gray-400 mt-2">{tafsir.author}</p>
             <span className="inline-block mt-4 text-sm text-yellow-400 capitalize">
               {tafsir.language}
             </span>

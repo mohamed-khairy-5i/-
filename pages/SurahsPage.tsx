@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { NavLink } from 'react-router-dom';
 import { getSurahs } from '../services/api';
@@ -15,12 +16,12 @@ const SurahCard: React.FC<{ surah: SurahReference }> = ({ surah }) => (
                 <span className="flex items-center justify-center w-10 h-10 bg-gray-700 text-yellow-400 rounded-md">{surah.number}</span>
                 <div>
                     <h3 className="text-xl font-bold font-amiri-quran">{surah.name}</h3>
-                    <p className="text-sm text-gray-400">{surah.englishName}</p>
+                    <p className="text-sm text-gray-400 mt-2">{surah.englishName}</p>
                 </div>
             </div>
             <div className="text-left">
                 <p className="text-lg text-gray-300">{surah.revelationType === 'Meccan' ? 'مكية' : 'مدنية'}</p>
-                <p className="text-sm text-gray-400">{surah.numberOfAyahs} آيات</p>
+                <p className="text-sm text-gray-400 mt-2">{surah.numberOfAyahs} آيات</p>
             </div>
         </div>
     </NavLink>

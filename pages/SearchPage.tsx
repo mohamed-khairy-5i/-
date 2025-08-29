@@ -1,34 +1,52 @@
-import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, useSearchParams } from 'react-router-dom';
 import { searchQuran } from '../services/api';
 import type { SearchResult } from '../types';
 import Spinner from '../components/Spinner';
 import { SearchIcon } from '../components/icons';
 
 const SearchPage: React.FC = () => {
-    const [query, setQuery] = useState('');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [query, setQuery] = useState(searchParams.get('q') || '');
     const [results, setResults] = useState<SearchResult | null>(null);
     const [loading, setLoading] = useState(false);
-    const [searched, setSearched] = useState(false);
+    const [searched, setSearched] = useState(!!searchParams.get('q'));
 
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!query.trim()) return;
-
+    const runSearch = async (searchTerm: string) => {
+        if (!searchTerm.trim()) {
+            setResults(null);
+            setSearched(false);
+            return;
+        };
         setLoading(true);
         setSearched(true);
-        const searchResults = await searchQuran(query);
+        const searchResults = await searchQuran(searchTerm);
         setResults(searchResults);
         setLoading(false);
     };
+    
+    useEffect(() => {
+        const initialQuery = searchParams.get('q');
+        if (initialQuery) {
+            runSearch(initialQuery);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-    const highlightQuery = (text: string, query: string) => {
-        if (!query) return text;
-        const parts = text.split(new RegExp(`(${query})`, 'gi'));
+
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSearchParams(query ? { q: query.trim() } : {});
+        runSearch(query);
+    };
+
+    const highlightQuery = (text: string, queryToHighlight: string) => {
+        if (!queryToHighlight) return text;
+        const parts = text.split(new RegExp(`(${queryToHighlight})`, 'gi'));
         return (
             <>
                 {parts.map((part, index) =>
-                    part.toLowerCase() === query.toLowerCase() ? (
+                    part.toLowerCase() === queryToHighlight.toLowerCase() ? (
                         <mark key={index} className="bg-yellow-400 text-gray-900 px-1 rounded">
                             {part}
                         </mark>
@@ -70,11 +88,11 @@ const SearchPage: React.FC = () => {
                     <>
                         {results && results.count > 0 ? (
                             <div>
-                                <p className="text-center text-gray-400 mb-4">تم العثور على {results.count} نتيجة للبحث عن "{query}"</p>
+                                <p className="text-center text-gray-400 mb-4">تم العثور على {results.count} نتيجة للبحث عن "{searchParams.get('q')}"</p>
                                 {results.matches.map(match => (
                                      <div key={match.number} className="bg-gray-800/50 p-4 rounded-lg border-r-4 border-yellow-400">
-                                         <p className="font-amiri-quran text-xl mb-2">
-                                             {highlightQuery(match.text, query)}
+                                         <p className="font-amiri-quran text-xl mb-3">
+                                             {highlightQuery(match.text, searchParams.get('q') || '')}
                                          </p>
                                          <p className="text-sm text-yellow-400">
                                              <NavLink to={`/surah/${match.surah.number}`} className="hover:underline">
@@ -85,11 +103,11 @@ const SearchPage: React.FC = () => {
                                 ))}
                             </div>
                         ) : (
-                             <p className="text-center text-gray-400 text-lg">لم يتم العثور على نتائج للبحث عن "{query}"</p>
+                             <p className="text-center text-gray-400 text-lg">لم يتم العثور على نتائج للبحث عن "{searchParams.get('q')}"</p>
                         )}
                     </>
                 )}
-                 {!searched && (
+                 {!searched && !loading && (
                     <p className="text-center text-gray-500 text-lg">أدخل كلمة بحث للبدء.</p>
                 )}
             </div>

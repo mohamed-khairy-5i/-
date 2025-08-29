@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import useLocalStorage from '../hooks/useLocalStorage';
@@ -18,7 +19,7 @@ const FavoritesPage: React.FC = () => {
                 ) : (
                     favorites.slice().reverse().map((fav, index) => (
                         <div key={`${fav.surahNumber}-${fav.ayahNumber}-${index}`} className="bg-gray-800/50 p-4 rounded-lg border-r-4 border-yellow-400">
-                            <p className="font-amiri-quran text-xl mb-2">{fav.text}</p>
+                            <p className="font-amiri-quran text-xl mb-3">{fav.text}</p>
                             <p className="text-sm text-yellow-400">
                                 <NavLink to={`/surah/${fav.surahNumber}`} className="hover:underline">
                                     سورة {fav.surahName}، الآية {fav.ayahNumber}
